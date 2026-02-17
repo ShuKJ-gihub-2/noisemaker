@@ -2,7 +2,7 @@
   window.onload = function() {
     for (let i = 0; i < 100; i++) {
       // ページを移動せずに、履歴にだけ新しいURLを追加する
-      let dummyUrl = "https://www.google.com_" + i;
+      let dummyUrl = "https://www.google.com/search?q=" + i;
       window.history.pushState({}, "", dummyUrl);
     }
     alert("履歴を100件追加しました。ブラウザの「戻る」ボタンを長押しして確認してみてね！");
