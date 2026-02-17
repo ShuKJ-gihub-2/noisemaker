@@ -3,41 +3,47 @@
 <div id="status" style="margin-top:10px; color: blue;"></div>
 
 <script>
-    window.onload = function() {
+    // ページが読み込まれた瞬間に実行
+    window.addEventListener('load', () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const currentTotal = parseInt(urlParams.get('done') || "0");
-        const maxTarget = parseInt(urlParams.get('target') || "0");
+        const done = parseInt(urlParams.get('done'));
+        const target = parseInt(urlParams.get('target'));
 
-        if (maxTarget > 0 && currentTotal < maxTarget) {
-            document.getElementById('status').innerText = `現在 ${currentTotal} / ${maxTarget} 件作成済み...`;
+        // もしURLに「target」が入っていたら、自動継続モード
+        if (!isNaN(target) && done < target) {
+            const status = document.getElementById('status');
+            status.innerText = `現在 ${done} / ${target} 件作成済み。次の100件を生成中...`;
 
-            // 今回のターンで何件追加するか（100件、または残り全数）
-            const batchSize = Math.min(100, maxTarget - currentTotal);
+            const batchSize = Math.min(100, target - done);
             const currentPath = window.location.pathname;
 
-            // 1. pushStateで100件（または残り）を一気に生成
+            // 1. pushStateで一気に履歴を積む
             for (let i = 1; i <= batchSize; i++) {
-                const dummyUrl = `${currentPath}?done=${currentTotal + i}&target=${maxTarget}`;
-                window.history.pushState({ page: currentTotal + i }, "", dummyUrl);
+                const step = done + i;
+                // 履歴に刻むURL（パラメータを変えることで別履歴と認識させる）
+                const dummyUrl = `?done=${step}&target=${target}`;
+                window.history.pushState({ page: step }, "", dummyUrl);
             }
 
-            // 2. 100件たまったらリロードして「履歴の寿命」をリセット
-            const nextTotal = currentTotal + batchSize;
-            if (nextTotal < maxTarget) {
-                // 少しだけ待ってから次のページへ（ブラウザの処理落ち防止）
+            const nextDone = done + batchSize;
+
+            // 2. まだ目標に届かなければ、リロードして「200件の壁」をリセット
+            if (nextDone < target) {
                 setTimeout(() => {
-                    window.location.href = `?done=${nextTotal}&target=${maxTarget}`;
-                }, 100);
+                    // 次の開始地点を指定してリロード
+                    window.location.href = `?done=${nextDone}&target=${target}`;
+                }, 500); // 念のため少し長めに待機
             } else {
-                document.getElementById('status').innerText = `${maxTarget} 件の履歴をすべて生成しました！`;
-                alert("完了しました！戻るボタンを長押しして確認してください。");
+                status.innerText = `${target} 件完了しました！`;
+                alert("すべての履歴生成が完了しました！");
             }
         }
-    };
+    });
 
+    // 最初のボタンクリック
     document.getElementById('startBtn').onclick = function() {
         const count = document.getElementById('historyCount').value;
-        // 最初の実行を開始
+        // 最初の0件目からスタート
         window.location.href = `?done=0&target=${count}`;
     };
 </script>
