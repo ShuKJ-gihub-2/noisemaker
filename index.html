@@ -1,32 +1,30 @@
-<div id="status" style="margin-top:10px; color: green;"></div>
-
-<input type="number" id="historyCount" value="100" min="1">
-<button id="startBtn">履歴を生成する</button>
+<input type="number" id="historyCount" value="500">
+<button id="startBtn">リロード連打で履歴量産</button>
+<div id="status"></div>
 
 <script>
-    document.getElementById('startBtn').onclick = function() {
-        // 入力された数値を取得
-        const count = parseInt(document.getElementById('historyCount').value);
-        const status = document.getElementById('status');
-        if (isNaN(count) || count <= 0) {
-           alert("有効な数字を入力してください");
-            return;
-        }
-        
-        // 現在のパスを取得（例: /noisemaker1/index.html）
-        const currentPath = window.location.pathname;
-        
-        // ループで履歴を生成
-        for (let i = 0; i < count; i++) {
-               
-        　// 同じドメイン内のURLとして ?h=0, ?h=1... を追加
-          const dummyUrl = currentPath + "?h=" + i;
-             
-            // 履歴を積み上げる（タブ移動なし）
-            window.history.pushState({ page: i }, "", dummyUrl);
-        }
+    window.onload = function() {
+        // URLから今のカウントを取得
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentStep = parseInt(urlParams.get('step') || "0");
+        const maxStep = parseInt(urlParams.get('max') || "0");
 
-        status.innerText = count + "件の履歴を生成しました！";
-        alert(count + "件完了！ブラウザの「戻る」ボタンを長押しして確認してください。");
-     };
+        if (currentStep < maxStep) {
+            document.getElementById('status').innerText = `${currentStep} / ${maxStep} 生成中...`;
+            
+            // 次のカウントへリロード
+            setTimeout(() => {
+                window.location.href = `?step=${currentStep + 1}&max=${maxStep}`;
+            }, 100); // 0.1秒ごとにリロード
+        } else if (maxStep > 0) {
+            document.getElementById('status').innerText = maxStep + "件完了！";
+            alert("200件の壁を突破しました！");
+        }
+    };
+
+    document.getElementById('startBtn').onclick = function() {
+        const count = document.getElementById('historyCount').value;
+        // 最初の1回目を起動
+        window.location.href = `?step=1&max=${count}`;
+    };
 </script>
