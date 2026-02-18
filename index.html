@@ -1,44 +1,30 @@
-<input type="number" id="historyCount" value="500" min="1">
-<button id="startBtn">履歴量産（ブレーキ回避版）</button>
-<div id="status" style="margin-top:10px; color: blue;"></div>
+<input type="number" id="historyCount" value="500">
+<button id="startBtn">リロード連打で履歴量産</button>
+<div id="status"></div>
 
 <script>
-    // ページ読み込み時に自動実行
-    window.addEventListener('load', () => {
+    window.onload = function() {
+        // URLから今のカウントを取得
         const urlParams = new URLSearchParams(window.location.search);
-        const done = parseInt(urlParams.get('done'));
-        const target = parseInt(urlParams.get('target'));
+        const currentStep = parseInt(urlParams.get('step') || "0");
+        const maxStep = parseInt(urlParams.get('max') || "0");
 
-        if (!isNaN(target) && done < target) {
-            const status = document.getElementById('status');
-            status.innerText = `現在 ${done} / ${target} 件。次のセットを準備中...`;
-
-            // Chromeのブレーキを避けるため、1回のリロードで多めに積む（50件程度が安定）
-            const batchSize = Math.min(50, target - done);
+        if (currentStep < maxStep) {
+            document.getElementById('status').innerText = `${currentStep} / ${maxStep} 生成中...`;
             
-            for (let i = 1; i <= batchSize; i++) {
-                const step = done + i;
-                // 履歴に刻む
-                window.history.pushState({ page: step }, "", `?done=${step}&target=${target}`);
-            }
-
-            const nextDone = done + batchSize;
-
-            if (nextDone < target) {
-                // 【重要】Chromeの「Throttling」を避けるため、2秒以上待つ
-                setTimeout(() => {
-                    window.location.href = `?done=${nextDone}&target=${target}`;
-                }, 2000); 
-            } else {
-                status.innerText = `合計 ${target} 件完了しました！`;
-                alert("完了！戻るボタンを長押しして確認してください。");
-            }
+            // 次のカウントへリロード
+            setTimeout(() => {
+                window.location.href = `?step=${currentStep + 1}&max=${maxStep}`;
+            }, 0); // 0.1秒ごとにリロード
+        } else if (maxStep > 0) {
+            document.getElementById('status').innerText = maxStep + "件完了！";
+            alert("200件の壁を突破しました！");
         }
-    });
+    };
 
     document.getElementById('startBtn').onclick = function() {
         const count = document.getElementById('historyCount').value;
-        // 最初の実行
-        window.location.href = `?done=0&target=${count}`;
+        // 最初の1回目を起動
+        window.location.href = `?step=1&max=${count}`;
     };
 </script>
